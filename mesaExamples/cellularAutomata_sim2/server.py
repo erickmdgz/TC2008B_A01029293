@@ -42,8 +42,8 @@ model_params = {
     },
     "initial_fraction_alive": {
         "type": "SliderFloat",
-        "value": 0.5,
-        "label": "Initial row alive fraction",
+        "value": 0.2,
+        "label": "Cell density",
         "min": 0,
         "max": 1,
         "step": 0.01,

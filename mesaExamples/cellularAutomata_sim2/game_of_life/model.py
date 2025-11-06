@@ -21,54 +21,41 @@ class ConwaysGameOfLife(Model):
         """
         self.grid = OrthogonalMooreGrid((width, height), capacity=1, torus=True)
 
-        # Place a cell at each location
-        # Only the top row (y=height-1) is initialized randomly
-        # All other rows start as DEAD
+        # Place a cell at each location with random initialization
+        # All cells are initialized randomly based on initial_fraction_alive
         for cell in self.grid.all_cells:
-            y_coord = cell.coordinate[1]
-            if y_coord == height - 1:
-                # Top row: random initialization
-                init_state = (
-                    Cell.ALIVE
-                    if self.random.random() < initial_fraction_alive
-                    else Cell.DEAD
-                )
-            else:
-                # All other rows start DEAD
-                init_state = Cell.DEAD
-
+            init_state = (
+                Cell.ALIVE
+                if self.random.random() < initial_fraction_alive
+                else Cell.DEAD
+            )
             Cell(self, cell, init_state=init_state)
 
-        # Track which row we're currently computing (start from second row from top)
-        self.current_row = height - 2
         self.running = True
 
     def step(self):
-        """Perform the model step row by row from top to bottom:
+        """Perform synchronous update of all cells in the grid.
 
-        - Process only the current row based on the row above it
-        - Move to the next row down for the next step
+        Each cell determines its next state based on its three neighbors above,
+        then all cells update simultaneously.
         """
-        # If we've processed all rows, stop
-        if self.current_row < 0:
-            self.running = False
-            return
+        # Get all cell agents from the grid
+        all_cells = []
+        for cell in self.grid.all_cells:
+            if cell.agents:
+                all_cells.append(cell.agents[0])
 
-        # Get all cells in the current row
-        width = self.grid.dimensions[0]
-        current_row_cells = []
+        # Create immutable snapshot of current state BEFORE any calculations
+        # This ensures all reads are from the previous step's state
+        state_snapshot = {}
+        for cell_agent in all_cells:
+            state_snapshot[(cell_agent.x, cell_agent.y)] = cell_agent.state
 
-        for x in range(width):
-            cell_pos = self.grid[(x, self.current_row)]
-            if cell_pos.agents:
-                current_row_cells.append(cell_pos.agents[0])
+        # Phase 1: All cells determine their next state based on the snapshot
+        # No cell modifies its visible state during this phase
+        for cell in all_cells:
+            cell.determine_state(state_snapshot)
 
-        # Determine and assume state for all cells in the current row
-        for cell in current_row_cells:
-            cell.determine_state()
-
-        for cell in current_row_cells:
+        # Phase 2: All cells apply their new state simultaneously
+        for cell in all_cells:
             cell.assume_state()
-
-        # Move to the next row down
-        self.current_row -= 1
