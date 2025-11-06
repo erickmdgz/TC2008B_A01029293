@@ -38,41 +38,31 @@ class Cell(FixedAgent):
         self.state = init_state
         self._next_state = None
 
-    def determine_state(self):
+    def determine_state(self, state_snapshot):
         """Compute the cell state based on the three neighbors in the row above.
         Uses 1D cellular automaton rules with the rule table.
+
+        Args:
+            state_snapshot: Immutable dictionary mapping (x, y) -> state from previous step
         """
-        # Get grid height
-        height = self.model.grid.dimensions[1]
-
-        # If this is the top row (y=height-1), don't change state
-        if self.y == height - 1:
-            self._next_state = self.state
-            return
-
-        # Get the three neighbors from the row above: left, center, right
+        # Get grid dimensions
         x, y = self.x, self.y
         width = self.model.grid.dimensions[0]
+        height = self.model.grid.dimensions[1]
 
-        # Get positions of the three neighbors above (with wrapping for torus)
-        left_pos = ((x - 1) % width, y + 1)
-        center_pos = (x, y + 1)
-        right_pos = ((x + 1) % width, y + 1)
+        # Read states EXCLUSIVELY from the snapshot (previous step's state)
+        # With torus=True, the grid wraps around, so we handle coordinates with modulo
 
-        # Get the states of the three neighbors
-        left_cell = self.model.grid[left_pos]
-        center_cell = self.model.grid[center_pos]
-        right_cell = self.model.grid[right_pos]
+        # Calculate neighbor positions with wrap-around (toroidal topology)
+        left_x = (x - 1) % width
+        center_x = x
+        right_x = (x + 1) % width
+        neighbor_y = (y + 1) % height
 
-        # Get agents at those positions
-        left_agents = left_cell.agents
-        center_agents = center_cell.agents
-        right_agents = right_cell.agents
-
-        # Get states (default to DEAD if no agent)
-        left_state = left_agents[0].state if left_agents else self.DEAD
-        center_state = center_agents[0].state if center_agents else self.DEAD
-        right_state = right_agents[0].state if right_agents else self.DEAD
+        # Get states from the snapshot
+        left_state = state_snapshot.get((left_x, neighbor_y), self.DEAD)
+        center_state = state_snapshot.get((center_x, neighbor_y), self.DEAD)
+        right_state = state_snapshot.get((right_x, neighbor_y), self.DEAD)
 
         # Create the key for the rule table
         key = f"{left_state}{center_state}{right_state}"
