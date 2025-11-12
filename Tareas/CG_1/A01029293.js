@@ -212,7 +212,7 @@ function main() {
       vao: null,
       transforms: {
         tx: 400,
-        ty: 300,
+        ty: 150,
         rotDeg: 0,
         sx: 1.0,
         sy: 1.0
@@ -245,8 +245,8 @@ function main() {
   pivotFolder.open();
 
   const faceFolder = gui.addFolder('Cara');
-  faceFolder.add(objects.face.transforms, 'tx', 0, 800).name('Traslación X');
-  faceFolder.add(objects.face.transforms, 'ty', 0, 600).name('Traslación Y');
+  faceFolder.add(objects.face.transforms, 'tx', 0, 800).name('Posición X');
+  faceFolder.add(objects.face.transforms, 'ty', 0, 600).name('Posición Y');
   faceFolder.add(objects.face.transforms, 'rotDeg', 0, 360).name('Rotación (°)');
   faceFolder.add(objects.face.transforms, 'sx', 0.1, 5.0).name('Escala X');
   faceFolder.add(objects.face.transforms, 'sy', 0.1, 5.0).name('Escala Y');
@@ -281,16 +281,17 @@ function main() {
     twgl.drawBufferInfo(gl, objects.pivot.bufferInfo);
 
     // Dibujar cara con transformaciones compuestas
-    // M_cara = T(tx, ty) · T(px, py) · R(rot) · T(−px, −py) · S(sx, sy)
+    // M_cara = T(px, py) · R(rot) · T(-px, -py) · T(tx, ty) · S(sx, sy)
+    // La cara rota alrededor del pivote, manteniendo su posición absoluta (tx, ty)
     const { tx, ty, rotDeg, sx, sy } = objects.face.transforms;
     const { px, py } = objects.pivot.transforms;
     const rotRadians = (rotDeg * Math.PI) / 180;
 
     const faceMatrix = M2D.composite([
-      M2D.translation(tx, ty),
       M2D.translation(px, py),
       M2D.rotation(rotRadians),
       M2D.translation(-px, -py),
+      M2D.translation(tx, ty),
       M2D.scale(sx, sy)
     ]);
 
