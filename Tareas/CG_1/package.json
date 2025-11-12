@@ -1,0 +1,19 @@
+{
+  "name": "cg_1-transformaciones-2d",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Transformaciones 2D con WebGL - Erick Alonso Morales Dieguez",
+  "author": "Erick Alonso Morales Dieguez - A01029293",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "lil-gui": "^0.19.2",
+    "twgl.js": "^5.5.4"
+  },
+  "devDependencies": {
+    "vite": "^5.3.4"
+  }
+}
